@@ -1,0 +1,44 @@
+name: learning
+description: "A new Flutter project."
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider:
+  image_picker: ^0.8.9
+  path_provider:
+  pdf: ^3.10.6
+  printing: ^5.11.1
+  shared_preferences:
+  intl:
+  share_plus: any
+  google_fonts:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+# Only use dependency_overrides if you need to override a package version locally
+dependency_overrides:
+  font_awesome_flutter: ^10.8.0
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/images/logo.webp
+    - assets/images/logo-ar.webp
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700

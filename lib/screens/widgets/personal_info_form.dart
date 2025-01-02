@@ -1,0 +1,129 @@
+import 'package:flutter/material.dart';
+import 'package:learning/models/personal_info.dart';
+import 'package:learning/providers/personal_info_provider.dart';
+import 'package:learning/widgets/custom_text_field.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:learning/widgets/profile_image_picker.dart';
+import 'package:provider/provider.dart';
+
+class PersonalInfoForm extends StatefulWidget {
+  final Function(PersonalInfo) onSaved;
+  final PersonalInfo? initialInfo;
+
+  const PersonalInfoForm({
+    super.key,
+    required this.onSaved,
+    this.initialInfo,
+  });
+
+  @override
+  State<PersonalInfoForm> createState() => _PersonalInfoFormState();
+}
+
+class _PersonalInfoFormState extends State<PersonalInfoForm> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _titleController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _summaryController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialInfo?.name);
+    _titleController = TextEditingController(text: widget.initialInfo?.title);
+    _addressController = TextEditingController(text: widget.initialInfo?.address);
+    _phoneController = TextEditingController(text: widget.initialInfo?.phone);
+    _emailController = TextEditingController(text: widget.initialInfo?.email);
+    _summaryController = TextEditingController(text: widget.initialInfo?.summary);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _titleController.dispose();
+    _addressController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _summaryController.dispose();
+    super.dispose();
+  }
+
+  void _saveForm() {
+    if (_formKey.currentState?.validate() ?? false) {
+      final provider = context.read<PersonalInfoProvider>();
+      final updatedInfo = PersonalInfo(
+        name: _nameController.text,
+        title: _titleController.text,
+        address: _addressController.text,
+        phone: _phoneController.text,
+        email: _emailController.text,
+        summary: _summaryController.text,
+        imagePath: provider.personalInfo?.imagePath ?? '',
+      );
+      widget.onSaved(updatedInfo);
+      provider.updatePersonalInfo(updatedInfo);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            const ProfileImagePicker(),
+            CustomTextField(
+              label: l10n.fullName,
+              controller: _nameController,
+              validator: (value) =>
+                  value?.isEmpty ?? true ? l10n.pleaseEnterName : null,
+            ),
+            CustomTextField(
+              label: l10n.title,
+              controller: _titleController,
+              validator: (value) =>
+                  value?.isEmpty ?? true ? l10n.pleaseEnterTitle : null,
+            ),
+            CustomTextField(
+              label: l10n.address,
+              controller: _addressController,
+              validator: (value) =>
+                  value?.isEmpty ?? true ? l10n.pleaseEnterAddress : null,
+            ),
+            CustomTextField(
+              label: l10n.phone,
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              validator: (value) =>
+                  value?.isEmpty ?? true ? l10n.pleaseEnterPhone : null,
+            ),
+            CustomTextField(
+              label: l10n.email,
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) =>
+                  value?.isEmpty ?? true ? l10n.pleaseEnterEmail : null,
+            ),
+            CustomTextField(
+              label: l10n.professionalSummary,
+              controller: _summaryController,
+              maxLines: 3,
+              validator: (value) =>
+                  value?.isEmpty ?? true ? l10n.pleaseEnterSummary : null,
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _saveForm,
+              child: Text(l10n.save),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
