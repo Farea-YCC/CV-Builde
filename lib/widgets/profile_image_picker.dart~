@@ -1,0 +1,63 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:learning/providers/personal_info_provider.dart';
+import 'package:provider/provider.dart';
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:learning/providers/personal_info_provider.dart'; // تأكد من صحة المسار
+
+class ProfileImagePicker extends StatelessWidget {
+  const ProfileImagePicker({super.key});
+
+  Future<void> _pickImage(BuildContext context) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image != null) {
+        if (!context.mounted) return;
+
+        final provider = context.read<PersonalInfoProvider>();
+        if (provider == null) {
+          throw Exception('PersonalInfoProvider not found in the widget tree.');
+        }
+
+        provider.updateProfileImage(image.path);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick an image. Please try again.')), // رسالة واضحة
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<PersonalInfoProvider>(
+      builder: (context, provider, child) {
+        final imagePath = provider.personalInfo?.imagePath;
+        return Column(
+          children: [
+            CircleAvatar(
+              radius: 60,
+              backgroundImage: imagePath != null && File(imagePath).existsSync()
+                  ? FileImage(File(imagePath))
+                  : const AssetImage('assets/images/logo-ar.webp') as ImageProvider,
+              backgroundColor: Colors.grey.shade200, // لون خلفية إذا لم يتم تحميل الصورة
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: () => _pickImage(context),
+              icon: const Icon(Icons.photo_library),
+              label: const Text('Upload Photo'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

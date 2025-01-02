@@ -1,0 +1,250 @@
+import 'dart:io';
+import 'package:learning/models/course.dart';
+import 'package:learning/models/education.dart';
+import 'package:learning/models/experience.dart';
+import 'package:learning/models/language.dart';
+import 'package:learning/models/personal_info.dart';
+import 'package:learning/models/skill.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+class PdfService {
+  static Future<void> generateAndPrint({
+    required PersonalInfo personalInfo,
+    required List<Experience> experiences,
+    required List<Education> education,
+    required List<Skill> skills,
+    required List<Language> languages,
+    required List<Course> courses,
+    String? imagePath,
+  }) async {
+    final pdf = pw.Document();
+
+    // Load fonts
+    final font = await PdfGoogleFonts.nunitoRegular();
+    final boldFont = await PdfGoogleFonts.nunitoBold();
+
+    // Load profile image if exists
+    pw.MemoryImage? profileImage;
+    if (imagePath != null) {
+      final file = File(imagePath);
+      if (await file.exists()) {
+        final bytes = await file.readAsBytes();
+        profileImage = pw.MemoryImage(bytes);
+      }
+    }
+
+    // Define colors
+    final primaryColor = PdfColor.fromHex('#1E40AF');
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        build: (context) => [
+          _buildHeader(personalInfo, profileImage, font, boldFont, primaryColor),
+          pw.SizedBox(height: 20),
+          _buildSection('EXPERIENCE', experiences, font, boldFont, primaryColor),
+          _buildSection('EDUCATION', education, font, boldFont, primaryColor),
+          _buildSection('SKILLS', skills, font, boldFont, primaryColor),
+          _buildSection('LANGUAGES', languages, font, boldFont, primaryColor),
+          _buildSection('COURSES', courses, font, boldFont, primaryColor),
+        ],
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (format) => pdf.save(),
+    );
+  }
+
+  static pw.Widget _buildHeader(
+      PersonalInfo info,
+      pw.MemoryImage? profileImage,
+      pw.Font font,
+      pw.Font boldFont,
+      PdfColor color,
+      ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Row(
+          children: [
+            if (profileImage != null)
+              pw.Container(
+                width: 200,
+                height: 200,
+                decoration: pw.BoxDecoration(
+                  shape: pw.BoxShape.circle,
+                  image: pw.DecorationImage(
+                    image: profileImage,
+                    fit: pw.BoxFit.cover,
+                  ),
+                ),
+              ),
+            pw.SizedBox(width: 20),
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    info.name,
+                    style: pw.TextStyle(
+                      font: boldFont,
+                      fontSize: 22,
+                      color: color,
+                    ),
+                  ),
+                  pw.Text(
+                    info.title,
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 16,
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  _buildContactInfo(info, font),
+                ],
+              ),
+            ),
+          ],
+        ),
+        pw.Divider(),
+        pw.SizedBox(height: 10),
+        pw.Text(
+          info.summary,
+          style: pw.TextStyle(
+            font: font,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _buildContactInfo(PersonalInfo info, pw.Font font) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(info.email, style: pw.TextStyle(font: font, fontSize: 12)),
+        pw.Text(info.phone, style: pw.TextStyle(font: font, fontSize: 12)),
+        pw.Text(info.address, style: pw.TextStyle(font: font, fontSize: 12)),
+      ],
+    );
+  }
+
+  static pw.Widget _buildSection(
+      String title,
+      List<dynamic> items,
+      pw.Font font,
+      pw.Font boldFont,
+      PdfColor color,
+      ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Container(
+          margin: const pw.EdgeInsets.only(top: 20, bottom: 10),
+          child: pw.Text(
+            title,
+            style: pw.TextStyle(
+              font: boldFont,
+              fontSize: 16,
+              color: color,
+            ),
+          ),
+        ),
+        ...items.map((item) => _buildItem(item, font, boldFont)),
+      ],
+    );
+  }
+
+  static pw.Widget _buildItem(dynamic item, pw.Font font, pw.Font boldFont) {
+    if (item is Experience) {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 10),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    '${item.title} at ${item.company}',
+                    style: pw.TextStyle(font: boldFont, fontSize: 14),
+                  ),
+                  pw.Text(
+                    item.dates,
+                    style: pw.TextStyle(font: font, fontSize: 12),
+                  ),
+                  pw.Text(
+                    item.description,
+                    style: pw.TextStyle(font: font, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (item is Education) {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 10),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    '${item.degree} in ${item.major}',
+                    style: pw.TextStyle(font: boldFont, fontSize: 14),
+                  ),
+                  pw.Text(
+                    '${item.university} - ${item.graduationDate}',
+                    style: pw.TextStyle(font: font, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (item is Skill) {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 5),
+        child: pw.Text(
+          '${item.name} - ${item.level}',
+          style: pw.TextStyle(font: font, fontSize: 12),
+        ),
+      );
+    }
+
+    if (item is Language) {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 5),
+        child: pw.Text(
+          '${item.name} - ${item.level}',
+          style: pw.TextStyle(font: font, fontSize: 12),
+        ),
+      );
+    }
+
+    if (item is Course) {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 5),
+        child: pw.Text(
+          '${item.title} - ${item.institution}',
+          style: pw.TextStyle(font: font, fontSize: 12),
+        ),
+      );
+    }
+    return pw.Container();
+  }
+}
+
